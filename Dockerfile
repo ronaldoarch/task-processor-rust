@@ -1,12 +1,12 @@
 # Dockerfile para Railway
-FROM rust:1.75-slim as builder
+FROM rust:1.75-slim AS builder
 
 WORKDIR /app
 
 # Copiar arquivos de dependências primeiro (cache layer)
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock* ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --release
+RUN cargo build --release || true
 RUN rm src/main.rs
 
 # Copiar código fonte

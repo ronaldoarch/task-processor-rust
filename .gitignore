@@ -2,7 +2,7 @@
 /target/
 **/*.rs.bk
 *.pdb
-Cargo.lock
+# Cargo.lock - commitado para aplicações binárias (melhor para deploy)
 
 # IDE
 .idea/
