@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Processor - WebSocket Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .task-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f9f9f9;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .task-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .task-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .status-completed {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .status-cancelled {
+            background: #e2e3e5;
+            color: #41464b;
+        }
+
+        .task-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .stats {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .stats h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 Task Processor - Dashboard</h1>
+        <div id="status" class="status disconnected">Desconectado</div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Nome da Tarefa</label>
+                <input type="text" id="taskName" placeholder="Ex: Processar dados" value="Nova Tarefa">
+            </div>
+            <div class="control-group">
+                <label>Duração (ms)</label>
+                <input type="number" id="duration" placeholder="5000" value="3000" min="100" max="30000">
+            </div>
+            <div class="control-group">
+                <label>Prioridade</label>
+                <select id="priority">
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high" selected>Alta</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="createBtn" onclick="createTask()">Criar Tarefa</button>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="connectBtn" onclick="connectWebSocket()">Conectar WebSocket</button>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="loadStats()">Atualizar Estatísticas</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <h3>📊 Estatísticas</h3>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalTasks">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="pendingTasks">0</div>
+                    <div class="stat-label">Pendentes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="processingTasks">0</div>
+                    <div class="stat-label">Processando</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Completadas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="failedTasks">0</div>
+                    <div class="stat-label">Falhadas</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px;">📋 Tarefas</h3>
+        <div class="tasks-grid" id="tasksGrid"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        const API_URL = 'http://localhost:3000';
+        const WS_URL = 'ws://localhost:3000/ws';
+
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('status');
+            if (connected) {
+                statusEl.textContent = '✅ Conectado';
+                statusEl.className = 'status connected';
+            } else {
+                statusEl.textContent = '❌ Desconectado';
+                statusEl.className = 'status disconnected';
+            }
+        }
+
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+                updateStatus(false);
+                document.getElementById('connectBtn').textContent = 'Conectar WebSocket';
+                return;
+            }
+
+            if (ws && ws.readyState === WebSocket.CONNECTING) {
+                console.log('WebSocket já está conectando...');
+                return;
+            }
+
+            try {
+                ws = new WebSocket(WS_URL);
+            } catch (error) {
+                console.error('Erro ao criar WebSocket:', error);
+                updateStatus(false);
+                return;
+            }
+
+            ws.onopen = () => {
+                updateStatus(true);
+                document.getElementById('connectBtn').textContent = 'Desconectar';
+                console.log('WebSocket conectado');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'task_update') {
+                    updateTaskCard(data.task);
+                    loadStats();
+                }
+            };
+
+            ws.onclose = () => {
+                updateStatus(false);
+                document.getElementById('connectBtn').textContent = 'Conectar WebSocket';
+                console.log('WebSocket desconectado');
+                // Tentar reconectar automaticamente após 3 segundos
+                setTimeout(() => {
+                    if (!ws || ws.readyState === WebSocket.CLOSED) {
+                        console.log('Tentando reconectar WebSocket...');
+                        connectWebSocket();
+                    }
+                }, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('Erro WebSocket:', error);
+                updateStatus(false);
+                // Não mostrar alerta, apenas log no console para não ser intrusivo
+                console.log('Certifique-se de que o servidor está rodando em http://localhost:3000');
+            };
+        }
+
+        async function createTask() {
+            const name = document.getElementById('taskName').value;
+            const duration = parseInt(document.getElementById('duration').value);
+            const priority = document.getElementById('priority').value;
+
+            if (!name || !duration) {
+                alert('Preencha todos os campos');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        duration_ms: duration,
+                        priority
+                    })
+                });
+
+                if (response.ok) {
+                    const task = await response.json();
+                    addTaskCard(task);
+                    loadStats();
+                    document.getElementById('taskName').value = '';
+                    // Feedback visual
+                    const btn = document.getElementById('createBtn');
+                    const originalText = btn.textContent;
+                    btn.textContent = '✅ Criada!';
+                    btn.style.background = '#28a745';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 1500);
+                } else {
+                    const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+                    alert(`Erro ao criar tarefa: ${error.error || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao conectar com o servidor. Certifique-se de que o servidor está rodando em http://localhost:3000');
+            }
+        }
+
+        function addTaskCard(task) {
+            const grid = document.getElementById('tasksGrid');
+            const card = createTaskCard(task);
+            grid.insertBefore(card, grid.firstChild);
+        }
+
+        function updateTaskCard(task) {
+            const card = document.getElementById(`task-${task.id}`);
+            if (card) {
+                const newCard = createTaskCard(task);
+                card.replaceWith(newCard);
+            } else {
+                addTaskCard(task);
+            }
+        }
+
+        function createTaskCard(task) {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.id = `task-${task.id}`;
+
+            const statusClass = `status-${task.status.toLowerCase()}`;
+            const statusText = {
+                'pending': 'Pendente',
+                'processing': 'Processando',
+                'completed': 'Completada',
+                'failed': 'Falhou',
+                'cancelled': 'Cancelada'
+            }[task.status.toLowerCase()] || task.status;
+
+            card.innerHTML = `
+                <div class="task-header">
+                    <div class="task-name">${task.name}</div>
+                    <div class="task-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="task-details">
+                    <div>ID: ${task.id}</div>
+                    <div>Prioridade: ${task.priority}</div>
+                    <div>Duração: ${task.duration_ms}ms</div>
+                    ${task.started_at ? `<div>Iniciada: ${new Date(task.started_at).toLocaleTimeString()}</div>` : ''}
+                    ${task.completed_at ? `<div>Finalizada: ${new Date(task.completed_at).toLocaleTimeString()}</div>` : ''}
+                    ${task.error_message ? `<div style="color: red;">Erro: ${task.error_message}</div>` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        async function loadTasks() {
+            try {
+                const response = await fetch(`${API_URL}/api/tasks`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const tasks = await response.json();
+                const grid = document.getElementById('tasksGrid');
+                grid.innerHTML = '';
+                if (tasks.length === 0) {
+                    grid.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">Nenhuma tarefa criada ainda. Crie uma tarefa acima!</p>';
+                } else {
+                    tasks.forEach(task => {
+                        grid.appendChild(createTaskCard(task));
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar tarefas:', error);
+                const grid = document.getElementById('tasksGrid');
+                grid.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 20px;">⚠️ Erro ao conectar com o servidor. Certifique-se de que o servidor está rodando em http://localhost:3000</p>';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/api/stats`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const stats = await response.json();
+                document.getElementById('totalTasks').textContent = stats.total_tasks;
+                document.getElementById('pendingTasks').textContent = stats.pending;
+                document.getElementById('processingTasks').textContent = stats.processing;
+                document.getElementById('completedTasks').textContent = stats.completed;
+                document.getElementById('failedTasks').textContent = stats.failed;
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+                // Manter os valores atuais em caso de erro
+            }
+        }
+
+        // Carregar dados iniciais
+        loadTasks();
+        loadStats();
+        setInterval(loadStats, 5000); // Atualizar stats a cada 5 segundos
+        
+        // Conectar WebSocket automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                connectWebSocket();
+            }, 500); // Pequeno delay para garantir que a página carregou completamente
+        });
+    </script>
+</body>
+</html>
+
