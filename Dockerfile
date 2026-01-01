@@ -36,6 +36,6 @@ EXPOSE 3000
 # Variável de ambiente para porta
 ENV PORT=3000
 
-# Comando de start
-CMD ["./task-processor"]
+# Comando de start (caminho absoluto)
+CMD ["/app/task-processor"]
 
