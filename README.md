@@ -217,6 +217,31 @@ rust/
 
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests.
 
+## 🚀 Deploy
+
+### Railway
+
+Este projeto está configurado para deploy no Railway:
+
+1. **Conecte seu repositório GitHub ao Railway**
+2. **Railway detectará automaticamente** o projeto Rust
+3. **Configure a variável de ambiente** (opcional):
+   - `PORT`: Porta do servidor (padrão: 3000)
+4. **Deploy automático** a cada push para a branch main
+
+O Railway usará:
+- Build: `cargo build --release`
+- Start: `cargo run --release`
+- Healthcheck: `/api/health`
+
+### Outras Plataformas
+
+O projeto também pode ser deployado em:
+- **Heroku**: Use o buildpack `heroku-buildpack-rust`
+- **Fly.io**: Configure `fly.toml` com imagem Rust
+- **Docker**: Use a imagem oficial `rust:latest`
+- **AWS/GCP/Azure**: Use containers Docker
+
 ## 📄 Licença
 
 Este projeto está sob a licença MIT.

@@ -62,10 +62,17 @@ async fn main() -> Result<()> {
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
-    info!("📡 Servidor rodando em http://0.0.0.0:3000");
-    info!("📊 WebSocket disponível em ws://localhost:3000/ws");
-    info!("📚 API REST disponível em http://localhost:3000/api");
+    // Usar porta do Railway ou padrão 3000
+    let port = std::env::var("PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse::<u16>()
+        .unwrap_or(3000);
+    
+    let addr = format!("0.0.0.0:{}", port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    info!("📡 Servidor rodando em http://{}", addr);
+    info!("📊 WebSocket disponível em ws://{}/ws", addr);
+    info!("📚 API REST disponível em http://{}/api", addr);
 
     axum::serve(listener, app).await?;
 

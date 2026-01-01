@@ -1,0 +1,30 @@
+===========================================
+COMANDOS PARA CRIAR REPOSITÓRIO NO GITHUB
+===========================================
+
+1. CRIE O REPOSITÓRIO NO GITHUB:
+   - Acesse: https://github.com/new
+   - Nome: task-processor-rust
+   - Descrição: Sistema de processamento de tarefas assíncrono em Rust
+   - Público ou Privado (sua escolha)
+   - NÃO marque nenhuma opção (README, .gitignore, license)
+   - Clique em "Create repository"
+
+2. CONECTE O REPOSITÓRIO LOCAL AO REMOTO:
+   
+   Substitua SEU_USUARIO pelo seu nome de usuário do GitHub:
+   
+   git remote add origin https://github.com/SEU_USUARIO/task-processor-rust.git
+   
+   OU se preferir SSH:
+   
+   git remote add origin git@github.com:SEU_USUARIO/task-processor-rust.git
+
+3. ENVIE O CÓDIGO:
+   
+   git push -u origin main
+
+===========================================
+PRONTO! Seu repositório estará no GitHub! 🎉
+===========================================
+
