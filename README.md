@@ -1,6 +1,18 @@
 # 🦀 Task Processor - Sistema de Processamento Assíncrono em Rust
 
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Um sistema de processamento de tarefas assíncrono de alto desempenho construído com Rust, demonstrando conceitos avançados como concorrência, WebSockets, e arquitetura de microserviços.
+
+## 🎯 Sobre o Projeto
+
+Este projeto foi desenvolvido como demonstração de habilidades avançadas em Rust, incluindo:
+- Programação assíncrona com Tokio
+- Design de APIs RESTful
+- WebSockets para comunicação em tempo real
+- Processamento paralelo e concorrência
+- Arquitetura de sistemas escaláveis
 
 ## ✨ Características
 
